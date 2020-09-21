@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Route 53 Stack for test cloudformation
+
+Parameters:
+  PublicIp: 
+    Type: String
+  HostedZoneName:
+    Type: String
+  Subdomain:
+    Type: String
+
+Resources:
+  myDNSRecord2:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: !Sub '${HostedZoneName}.'
+      Name: !Sub '${Subdomain}.${HostedZoneName}'
+      Type: A
+      TTL: '900'
+      ResourceRecords: [!Ref PublicIp]

@@ -1,0 +1,271 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Description: Cloudformation Template to launch wordpress website with custom DNS name
+
+Metadata:
+    
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: Network Configuration
+      Parameters:
+          - Environment
+          - VpcCIDR
+          - PublicSubnet1CIDR
+          - PublicSubnet2CIDR
+          - PrivateSubnet1CIDR
+          - PrivateSubnet2CIDR
+          - SSHLocation
+    - Label:
+        default: EC2 Instance Configuration
+      Parameters:
+          - InstanceType
+          - KeyName
+          - AmiType
+    - Label:
+        default: Database Configuration
+      Parameters:
+          - DBInstanceId
+          - DBName
+          - Engine
+          - DBInstanceClass
+          - AllocatedStorage
+    - Label:
+        default: Wordpress Login
+      Parameters:
+          - MasterUsername
+          - MasterUserPassword
+    - Label:
+        default: DNS Configuration
+      Parameters:
+          - HostedZoneName
+          - Subdomain 
+    - Label:
+        default: Nested Stack Templates
+      Parameters:
+          - VpcNestedStack
+          - DatabaseNestedStack
+          - InstanceNestedStack
+          - DnsNestedStack
+    ParameterLabels:
+      Environment:
+        default: The name of the environment for all your resources. This will be used as a tag on your resources to help you maintain them. 
+      VpcCIDR:
+        default: The CIDR range for all the ip addresses for all your resources
+      PublicSubnet1CIDR:
+        default: The CIDR range for Public Subnet 1
+      PublicSubnet2CIDR:
+        default: The CIDR range for Public Subnet 2
+      PrivateSubnet1CIDR:
+        default: The CIDR range for Private Subnet 1
+      PrivateSubnet2CIDR:
+        default: The CIDR range for Private Subnet 2
+      SSHLocation:
+        default: The CIDR range that will be allowed to access your server using SSH 
+      InstanceType:
+        default: Instance Type and Size
+      KeyName:
+        default: The name of the key used for SSH Access
+      AmiType:
+        default: AMI type (Image type)
+      DBInstanceId:
+        default: The database identifier
+      DBName:
+        default: The name of the database
+      MasterUsername:
+        default: The master username for your database
+      MasterUserPassword:
+        default: The master password for your database
+      Engine:
+        default: The database engine type
+      DBInstanceClass:
+        default: The database instance type
+      AllocatedStorage:
+        default: The storage size of the database in GB
+      HostedZoneName:
+        default: The name of your DNS
+      Subdomain:
+        default: The subdomain for your wordpress website
+      VpcNestedStack:
+        default: Copy the URL of the VPC Stack here from your S3 bucket
+      DatabaseNestedStack:
+        default: Copy the URL of the Database Stack here from your S3 bucket
+      InstanceNestedStack:
+        default: Copy the URL of the Instance Stack here from your S3 bucket
+      DnsNestedStack:
+        default: Copy the URL of the DNS Stack here from your S3 bucket
+Parameters:
+  Environment:
+    Description: An environment name that will be prefixed to resource names
+    Type: String
+  VpcCIDR:
+    AllowedPattern: "^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\\/(1[6-9]|2[0-8]))$"
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/16-28
+    AllowedValues:
+      - 172.31.0.0/16
+      - 10.0.0.0/16
+      - 192.168.0.0/16
+    Description: Use the same CIDR scheme for VPC and subnets
+    Type: String
+  PublicSubnet1CIDR:
+    Description: Please enter the IP range. Use the same CIDR scheme as the VPC
+    Type: String
+    AllowedValues:
+      - 172.31.0.0/24
+      - 10.0.0.0/24 
+      - 192.168.0.0/24
+  PublicSubnet2CIDR:
+    Description: Please enter the IP range. Use the same CIDR scheme as the VPC
+    Type: String
+    AllowedValues:
+      - 172.31.1.0/24
+      - 10.0.1.0/24 
+      - 192.168.1.0/24
+  PrivateSubnet1CIDR:
+    Description: Please enter the IP range. Use the same CIDR scheme as the VPC
+    Type: String
+    AllowedValues:
+      - 172.31.2.0/24
+      - 10.0.2.0/24 
+      - 192.168.2.0/24
+  PrivateSubnet2CIDR:
+    Description: Please enter the IP range. Use the same CIDR scheme as the VPC
+    Type: String
+    AllowedValues:
+      - 172.31.3.0/24
+      - 10.0.3.0/24 
+      - 192.168.3.0/24
+  SSHLocation:
+    AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
+    Type: String
+    Description: The IP address with access to SSH (If left at defualt, will allow anyone to SSH)
+    Default: 0.0.0.0/0
+  InstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    AllowedValues: [t2.nano, t2.micro, t2.small, t2.medium, t2.large, t2.xlarge, t2.2xlarge,
+      t3.nano, t3.micro, t3.small, t3.medium, t3.large, t3.xlarge, t3.2xlarge,
+      m4.large, m4.xlarge, m4.2xlarge, m4.4xlarge, m4.10xlarge,
+      m5.large, m5.xlarge, m5.2xlarge, m5.4xlarge,
+      c5.large, c5.xlarge, c5.2xlarge, c5.4xlarge, c5.9xlarge,
+      g3.8xlarge,
+      r5.large, r5.xlarge, r5.2xlarge, r5.4xlarge, r3.12xlarge,
+      i3.xlarge, i3.2xlarge, i3.4xlarge, i3.8xlarge,
+      d2.xlarge, d2.2xlarge, d2.4xlarge, d2.8xlarge]
+  KeyName:
+    Description: The EC2 Key Pair to allow SSH access to the instance
+    Type: AWS::EC2::KeyPair::KeyName
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  AmiType:
+    Description: The type of AMI (Instance Image) Uses the latest amazon-linux AMI
+    Type:  'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2'
+  DBInstanceId:
+    Description: The database identifier
+    Type: String
+    Default: "rds-mysql-inst01"
+    ConstraintDescription: Must be a valid RDS instance ID
+  DBName:
+    Description: The RDS DB Instance Name
+    Type: String
+    Default: WordpressDatabase
+    ConstraintDescription: No Special Characters
+  MasterUsername:
+    Description: The master username for the database. Do not leave as default for production website. 
+    Type: String
+    Default: admin12345
+  MasterUserPassword:
+    Description: The master password for the database. Do not leave as default for production website. 
+    Type: String
+    NoEcho: false
+    Default: admin12345
+  Engine:
+    Description: The name of the database engine to be used for this instance.
+    Type: String
+    Default: mysql
+    AllowedValues: [mysql, mariadb, postgres]
+    ConstraintDescription: "Please specify either a mysql, mariadb, or postgres engine for the RDS instance."
+  DBInstanceClass:
+    Description: The name of the compute and memory capacity classes of the DB instance.
+    Type: String
+    Default: db.t2.micro
+    AllowedValues:
+      - db.t2.micro
+      - db.t2.small
+  AllocatedStorage:
+    Description: The allocated storage size, specified in gigabytes (GB).
+    Type: String
+    Default: 10
+  HostedZoneName:
+    Description: The name of the DNS you created for your website
+    Type: String
+    Default: training.trambo.cloud
+  Subdomain:
+    Description: A subdomain to be tacked on at the beginning of your DNS
+    Type: String
+  VpcNestedStack:
+    Type: String   
+  DatabaseNestedStack:
+    Type: String      
+  InstanceNestedStack:
+    Type: String      
+  DnsNestedStack:
+    Type: String      
+
+Resources:
+  VPCStack:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: !Ref VpcNestedStack
+      Parameters:
+        Environment: !Ref Environment 
+        VpcCIDR: !Ref VpcCIDR
+        PublicSubnet1CIDR: !Ref PublicSubnet1CIDR
+        PublicSubnet2CIDR: !Ref PublicSubnet2CIDR
+        PrivateSubnet1CIDR: !Ref PrivateSubnet1CIDR
+        PrivateSubnet2CIDR: !Ref PrivateSubnet2CIDR
+  
+  WordpressDBStack:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: !Ref DatabaseNestedStack
+      Parameters:
+        DBInstanceId: !Ref DBInstanceId
+        Engine: !Ref Engine
+        SSHLocation: !Ref SSHLocation
+        DBInstanceClass: !Ref DBInstanceClass
+        AllocatedStorage: !Ref AllocatedStorage
+        DBName: !Ref DBName
+        MasterUsername: !Ref MasterUsername
+        MasterUserPassword: !Ref MasterUserPassword
+        VpcId: !GetAtt VPCStack.Outputs.VPC
+        PrivateSubnet1: !GetAtt VPCStack.Outputs.PrivateSubnet1
+        PrivateSubnet2: !GetAtt VPCStack.Outputs.PrivateSubnet2
+
+  EC2Stack:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: WordpressDBStack 
+    Properties: 
+      TemplateURL: !Ref InstanceNestedStack
+      Parameters:
+        DBName: !Ref DBName
+        MasterUsername: !Ref MasterUsername
+        MasterUserPassword: !Ref MasterUserPassword
+        KeyName: !Ref KeyName
+        InstanceType: !Ref InstanceType
+        AmiType: !Ref AmiType
+        SubnetId: !GetAtt VPCStack.Outputs.PublicSubnet1 
+        WebSecurityGroup: !GetAtt  WordpressDBStack.Outputs.WebSecurityGroup
+        DBEndpoint:  !GetAtt  WordpressDBStack.Outputs.DBEndpoint 
+
+  DNSStack: 
+    Type: AWS::CloudFormation::Stack
+    DependsOn: EC2Stack 
+    Properties: 
+      TemplateURL: !Ref DnsNestedStack
+      TimeoutInMinutes: '60'
+      Parameters:
+        PublicIp: !GetAtt EC2Stack.Outputs.PublicIp
+        HostedZoneName: !Ref HostedZoneName
+        Subdomain: !Ref Subdomain

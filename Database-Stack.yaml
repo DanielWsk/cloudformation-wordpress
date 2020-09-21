@@ -1,0 +1,115 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Database stack for wordpress
+
+Parameters:
+  VpcId:
+    Type: String
+  DBName:
+    Type: String
+  Engine:
+    Type: String
+  DBInstanceId:
+    Type: String
+  DBInstanceClass:
+    Type: String
+  AllocatedStorage:
+    Description: The size of the database (GiB)
+    Type: Number
+  MasterUsername:
+    NoEcho: 'true'
+    Description: Username for MySQL database access
+    Type: String
+  MasterUserPassword:
+    NoEcho: 'true'
+    Description: Password MySQL database access
+    Type: String
+  PrivateSubnet1:
+    Type: String
+  PrivateSubnet2:
+    Type: String
+  SSHLocation:
+        Type: String 
+
+Resources: 
+    RDSSubnetGroup: 
+        Type: "AWS::RDS::DBSubnetGroup"
+        Properties:
+          DBSubnetGroupDescription: Subnet Group 
+          SubnetIds: 
+            - Ref: PrivateSubnet1
+            - Ref: PrivateSubnet2
+    RDSInstance:
+        Type: 'AWS::RDS::DBInstance'
+        Properties:
+            DBInstanceIdentifier: !Ref DBInstanceId
+            DBName: !Ref DBName
+            DBInstanceClass: !Ref DBInstanceClass
+            AllocatedStorage: !Ref AllocatedStorage
+            Engine: !Ref Engine
+            EngineVersion: 8.0.16
+            MasterUsername: !Ref MasterUsername
+            MasterUserPassword: !Ref MasterUserPassword
+            DBSubnetGroupName: !Ref RDSSubnetGroup  
+            VPCSecurityGroups:
+               - !GetAtt RDSSecurityGroup.GroupId
+    RDSSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupDescription: DB Access
+            GroupName: myRDS-SG
+            VpcId: 
+                Ref: VpcId
+
+    WebSecurityGroup:
+        Type: AWS::EC2::SecurityGroup
+        Properties:
+            GroupName: Wordpress secuirty group
+            GroupDescription: Enable SSH, HTTP, HTTPS
+            VpcId: 
+                Ref: VpcId
+            SecurityGroupIngress:
+              - IpProtocol: tcp
+                FromPort: '443'
+                ToPort: '443'
+                CidrIp: 0.0.0.0/0
+              - IpProtocol: tcp
+                FromPort: '22'
+                ToPort: '22'
+                CidrIp:
+                    Ref: SSHLocation
+              - IpProtocol: tcp
+                FromPort: '80'
+                ToPort: '80'
+                CidrIp: 0.0.0.0/0    
+
+    DBInboundRule:
+        Type: AWS::EC2::SecurityGroupIngress
+        Properties:
+            IpProtocol: tcp
+            FromPort: '3306'
+            ToPort: '3306'
+            SourceSecurityGroupId:
+              Fn::GetAtt:
+              - WebSecurityGroup
+              - GroupId
+            GroupId:
+              Fn::GetAtt:
+              - RDSSecurityGroup
+              - GroupId
+
+Outputs:
+  WebSecurityGroup:
+    Description: EC2 Security Group
+    Value: !Ref WebSecurityGroup
+      
+  DBInstanceIdentifier:
+    Description: The database instance identifier
+    Value: !Ref RDSInstance
+
+  DBEndpoint:
+    Description: The connection endpoint for the database.
+    Value: !GetAtt  RDSInstance.Endpoint.Address
+
+  DBPort:
+    Description: The port number on which the database accepts connections.
+    Value: !GetAtt  RDSInstance.Endpoint.Port  
