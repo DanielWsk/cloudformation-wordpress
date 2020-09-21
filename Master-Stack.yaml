@@ -39,7 +39,6 @@ Metadata:
         default: DNS Configuration
       Parameters:
           - HostedZoneName
-          - Subdomain 
     - Label:
         default: Nested Stack Templates
       Parameters:
@@ -49,43 +48,41 @@ Metadata:
           - DnsNestedStack
     ParameterLabels:
       Environment:
-        default: The name of the environment for all your resources. This will be used as a tag on your resources to help you maintain them. 
+        default: Environment Label 
       VpcCIDR:
-        default: The CIDR range for all the ip addresses for all your resources
+        default: VPC CIDR
       PublicSubnet1CIDR:
-        default: The CIDR range for Public Subnet 1
+        default: Public Subnet 1 CIDR
       PublicSubnet2CIDR:
-        default: The CIDR range for Public Subnet 2
+        default: Public Subnet 2 CIDR
       PrivateSubnet1CIDR:
-        default: The CIDR range for Private Subnet 1
+        default: Private Subnet 1 CIDR
       PrivateSubnet2CIDR:
-        default: The CIDR range for Private Subnet 2
+        default: Private Subnet 2 CIDR
       SSHLocation:
-        default: The CIDR range that will be allowed to access your server using SSH 
+        default: SSH Access 
       InstanceType:
         default: Instance Type and Size
       KeyName:
-        default: The name of the key used for SSH Access
+        default: Key Pair Name
       AmiType:
         default: AMI type (Image type)
       DBInstanceId:
-        default: The database identifier
+        default: Database Identifier
       DBName:
-        default: The name of the database
+        default: Database Name
       MasterUsername:
-        default: The master username for your database
+        default: Master Username for Database
       MasterUserPassword:
-        default: The master password for your database
+        default: Master Password for Database
       Engine:
-        default: The database engine type
+        default: Database Engine
       DBInstanceClass:
-        default: The database instance type
+        default: Database Instance
       AllocatedStorage:
-        default: The storage size of the database in GB
+        default: Storage Size of the Database in GB
       HostedZoneName:
-        default: The name of your DNS
-      Subdomain:
-        default: The subdomain for your wordpress website
+        default: Website Name(DNS)
       VpcNestedStack:
         default: Copy the URL of the VPC Stack here from your S3 bucket
       DatabaseNestedStack:
@@ -138,7 +135,7 @@ Parameters:
   SSHLocation:
     AllowedPattern: "(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})/(\\d{1,2})"
     Type: String
-    Description: The IP address with access to SSH (If left at defualt, will allow anyone to SSH)
+    Description: The IP address with access to SSH. Use your own IP Address (If left at defualt, will allow anyone to SSH)
     Default: 0.0.0.0/0
   InstanceType:
     Description: EC2 instance type
@@ -199,10 +196,6 @@ Parameters:
     Default: 10
   HostedZoneName:
     Description: The name of the DNS you created for your website
-    Type: String
-    Default: training.trambo.cloud
-  Subdomain:
-    Description: A subdomain to be tacked on at the beginning of your DNS
     Type: String
   VpcNestedStack:
     Type: String   
@@ -268,4 +261,3 @@ Resources:
       Parameters:
         PublicIp: !GetAtt EC2Stack.Outputs.PublicIp
         HostedZoneName: !Ref HostedZoneName
-        Subdomain: !Ref Subdomain
