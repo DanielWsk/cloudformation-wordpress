@@ -24,3 +24,10 @@ In order to use this cloudformation template, you're going to need to set up som
 - Go to your AWS account and under services go to S3. You will need to create a bucket. Name it whatever you like, it won't matter. Download the files from this repo and then upload them into your bucket.
 
 USING THE TEMPLATE
+
+Go to cloudformation under services. Create a stack. Name the stack whatever you like. For the template source, choose S3 and then copy and paste the URL for the master stack. To find this URL, go to your S3 bucket, click on the master stack file, and the URL should be displayed there.
+Follow the instructions on the parameters page. Make sure that whichever option you choose for the VPC CIDR, all the subnets use the same CIDR scheme. Also don't forget to change the MasterUserName and MasterPassword to your own personal username and password. You can leave the rest of the settings on default and launch the stack. 
+The stack will take a little while to finish launching. Give it 15 minutes.
+
+Once the stack is fully launched, it should say Create Complete next to the master stack. 
+Now you can access your wordpress website. Go to the website you created. You should be prompted for your username and password.
